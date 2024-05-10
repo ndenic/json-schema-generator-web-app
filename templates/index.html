@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JSON Schema Generator</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='badin.png') }}">
+</head>
+<body>
+<div class="container">
+    <h1>JSON Schema Generator</h1>
+    <form id="jsonForm">
+        <textarea name="json_data" rows="10" placeholder="Paste JSON data here"></textarea>
+        <br>
+        <div class="button-container">
+            <button type="button" id="generateButton">Generate Schema</button>
+            <button type="button" id="copyButton">Copy All</button>
+            <button type="button" id="clearButton">Clear</button>
+        </div>
+    </form>
+
+    <div id="schemaOutput">
+        {% if schema %}
+        <pre>{{ schema }}</pre>
+        {% endif %}
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+
+
+    $(document).ready(function() {
+    // Copy All button functionality
+    $('#copyButton').click(function() {
+        var schemaText = $('#schemaOutput pre').text();
+        copyToClipboard(schemaText);
+    });
+
+    // Clear button functionality
+    $('#clearButton').click(function() {
+        $('textarea[name="json_data"]').val('');
+    });
+
+    // Generate Schema button functionality
+    $('#generateButton').click(function() {
+        var jsonData = $('textarea[name="json_data"]').val();
+
+        $.ajax({
+            type: 'POST',
+            url: '/generate_schema',
+            data: JSON.stringify({ json_data: jsonData }),
+            contentType: 'application/json',
+            success: function(response) {
+                var escapedSchema = $('<div>').text(response.schema).html();
+                $('#schemaOutput').html('<pre>' + escapedSchema + '</pre>');
+            },
+            error: function(xhr, status, error) {
+                console.error(xhr.responseText);
+                $('#schemaOutput').html('<div class="error">' + xhr.responseJSON.error + '</div>');
+            }
+        });
+    });
+
+    function copyToClipboard(text) {
+        var $temp = $("<textarea>");
+        $("body").append($temp);
+        $temp.val(text).select();
+        document.execCommand("copy");
+        $temp.remove();
+        alert('Schema copied to clipboard!');
+    }
+});
+
+
+</script>
+</body>
+</html>
